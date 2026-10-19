@@ -1,0 +1,42 @@
+@model List<ActivityLog>
+@{
+    ViewData["Title"] = "Activity Logs";
+    int currentPage = ViewBag.Page; int totalPages = ViewBag.TotalPages;
+    var type = ViewBag.Type as string; var search = ViewBag.Search as string;
+}
+<form method="get" class="filter-bar row g-2 mb-3">
+    <div class="col-md-5"><input name="search" value="@search" class="form-control" placeholder="Search action, details or user email" /></div>
+    <div class="col-md-4">
+        <select name="type" class="form-select">
+            <option value="">All activity types</option>
+            @foreach (var t in Enum.GetNames<ActivityType>())
+            {
+                <option value="@t" selected="@(type == t)">@t</option>
+            }
+        </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2"><button class="btn btn-sb flex-fill">Filter</button><a class="btn btn-outline-secondary" asp-action="ActivityLogs">Clear</a></div>
+</form>
+<div class="panel">
+    <div class="small text-muted mb-2">@ViewBag.Total event(s)</div>
+    <div class="table-responsive">
+        <table class="table table-sm align-middle">
+            <thead><tr><th>When</th><th>User</th><th>Action</th><th>Type</th><th>Details</th></tr></thead>
+            <tbody>
+                @foreach (var a in Model)
+                {
+                    <tr><td class="text-nowrap">@a.CreatedAt.ToString("yyyy-MM-dd HH:mm:ss")</td><td>@a.User?.FullName<div class="small text-muted">@a.User?.Email</div></td><td>@a.Action</td><td><span class="badge-soft-secondary">@a.ActivityType</span></td><td class="small">@a.Details</td></tr>
+                }
+                @if (!Model.Any())
+                {
+                    <tr><td colspan="5" class="text-center text-muted py-4">No log entries.</td></tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    <div class="d-flex justify-content-between align-items-center">
+        <a class="btn btn-sm btn-outline-secondary @(currentPage <= 1 ? "disabled" : "")" asp-action="ActivityLogs" asp-route-page="@(currentPage - 1)" asp-route-type="@type" asp-route-search="@search">&laquo; Previous</a>
+        <span class="small">Page @currentPage of @totalPages</span>
+        <a class="btn btn-sm btn-outline-secondary @(currentPage >= totalPages ? "disabled" : "")" asp-action="ActivityLogs" asp-route-page="@(currentPage + 1)" asp-route-type="@type" asp-route-search="@search">Next &raquo;</a>
+    </div>
+</div>

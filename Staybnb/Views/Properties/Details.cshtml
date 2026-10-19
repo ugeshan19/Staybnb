@@ -1,0 +1,147 @@
+@model PropertyDetailsViewModel
+@{
+    var p = Model.Property;
+    ViewData["Title"] = p.Title;
+    var images = p.Images.OrderBy(i => i.Id).ToList();
+    var returnUrl = Context.Request.Path.ToString();
+
+    // urls shown in the photo viewer (placeholder if the listing has no photos)
+    var photoUrls = images.Select(i => i.ImageUrl).ToList();
+    if (photoUrls.Count == 0) photoUrls.Add(UiHelper.Img(null));
+}
+<div class="d-flex justify-content-between align-items-start">
+    <div>
+        <h2 class="mb-1">@p.Title</h2>
+        <div class="text-muted"><i class="fa-solid fa-location-dot"></i> @p.City, @p.Country &middot; @p.PropertyType</div>
+        <div class="small mt-1">
+            <i class="fa-solid fa-user-group"></i> @p.MaxGuests guests &middot; <i class="fa-solid fa-bed"></i> @p.Bedrooms bedrooms &middot; @p.Beds beds &middot; <i class="fa-solid fa-bath"></i> @p.Bathrooms baths &middot;
+            <i class="fa-solid fa-star text-danger"></i> @(p.Reviews.Any() ? p.AverageRating.ToString("0.0") : "New") (@p.Reviews.Count reviews)
+        </div>
+    </div>
+    @if (Model.IsGuest)
+    {
+        <form asp-controller="Wishlist" asp-action="Toggle" method="post">
+            <input type="hidden" name="propertyId" value="@p.Id" />
+            <input type="hidden" name="returnUrl" value="@returnUrl" />
+            <button class="btn btn-outline-secondary btn-sm"><i class="@(Model.IsWishlisted ? "fa-solid text-danger" : "fa-regular") fa-heart"></i> @(Model.IsWishlisted ? "Saved" : "Save")</button>
+        </form>
+    }
+</div>
+
+<div class="gallery-wrap my-3">
+    <div class="gallery">
+        <img src="@UiHelper.Img(images.ElementAtOrDefault(0)?.ImageUrl)" alt="@p.Title"
+             data-bs-toggle="modal" data-bs-target="#photoModal" data-photo-index="0" />
+        <div class="side">
+            <img src="@UiHelper.Img(images.ElementAtOrDefault(1)?.ImageUrl ?? images.ElementAtOrDefault(0)?.ImageUrl)" alt=""
+                 data-bs-toggle="modal" data-bs-target="#photoModal" data-photo-index="@(images.Count > 1 ? 1 : 0)" />
+            <img src="@UiHelper.Img(images.ElementAtOrDefault(2)?.ImageUrl ?? images.ElementAtOrDefault(0)?.ImageUrl)" alt=""
+                 data-bs-toggle="modal" data-bs-target="#photoModal" data-photo-index="@(images.Count > 2 ? 2 : 0)" />
+        </div>
+    </div>
+    <button type="button" class="btn btn-light btn-sm show-photos-btn" data-bs-toggle="modal" data-bs-target="#photoModal" data-photo-index="0">
+        <i class="fa-solid fa-images"></i> Show all photos (@photoUrls.Count)
+    </button>
+</div>
+
+<div class="modal fade" id="photoModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-fullscreen">
+        <div class="modal-content photo-modal">
+            <div class="modal-header border-0">
+                <span class="text-white small" id="photoCounter"></span>
+                <button type="button" class="btn-close btn-close-white ms-auto" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body d-flex flex-column justify-content-center p-0">
+                <div id="photoCarousel" class="carousel slide" data-bs-interval="false" data-bs-ride="false">
+                    <div class="carousel-inner">
+                        @for (var i = 0; i < photoUrls.Count; i++)
+                        {
+                            <div class="carousel-item @(i == 0 ? "active" : "")">
+                                <img src="@photoUrls[i]" class="d-block mx-auto photo-full" alt="@p.Title photo @(i + 1)" />
+                            </div>
+                        }
+                    </div>
+                    @if (photoUrls.Count > 1)
+                    {
+                        <button class="carousel-control-prev" type="button" data-bs-target="#photoCarousel" data-bs-slide="prev">
+                            <span class="carousel-control-prev-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Previous</span>
+                        </button>
+                        <button class="carousel-control-next" type="button" data-bs-target="#photoCarousel" data-bs-slide="next">
+                            <span class="carousel-control-next-icon" aria-hidden="true"></span>
+                            <span class="visually-hidden">Next</span>
+                        </button>
+                    }
+                </div>
+                @if (photoUrls.Count > 1)
+                {
+                    <div class="photo-thumbs">
+                        @for (var i = 0; i < photoUrls.Count; i++)
+                        {
+                            <img src="@photoUrls[i]" alt="" data-photo-thumb="@i" />
+                        }
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-lg-7">
+        <div class="d-flex align-items-center gap-3 pb-3 border-bottom">
+            <span class="avatar">@(p.Host?.Initials)</span>
+            <div><div class="fw-semibold">Hosted by @p.Host?.FullName</div><span class="badge-soft-danger">Verified Host</span></div>
+            @if (Model.IsGuest && p.Host != null)
+            {
+                <a class="btn btn-outline-sb btn-sm ms-auto" asp-controller="Messages" asp-action="Thread" asp-route-id="@p.HostId"><i class="fa-regular fa-envelope"></i> Contact host</a>
+            }
+        </div>
+        <p class="py-3 border-bottom" style="white-space: pre-line">@p.Description</p>
+
+        <h4 class="mt-3">Amenities</h4>
+        <div class="row">
+            @foreach (var a in p.Amenities)
+            {
+                <div class="col-6 amenity"><i class="@a.IconClass"></i> @a.Name</div>
+            }
+            @if (!p.Amenities.Any()) { <div class="text-muted">No amenities listed.</div> }
+        </div>
+
+        <h4 class="mt-4">Reviews</h4>
+        @foreach (var r in p.Reviews.OrderByDescending(r => r.CreatedAt))
+        {
+            <div class="mb-3">
+                <div class="fw-semibold">@r.Reviewer?.FullName <span class="text-muted small">&middot; @r.CreatedAt.ToString("MMM yyyy")</span></div>
+                <div class="text-danger small">@for (var i = 0; i < r.Rating; i++) { <i class="fa-solid fa-star"></i> }</div>
+                <div>@r.Comment</div>
+            </div>
+        }
+        @if (!p.Reviews.Any()) { <div class="text-muted">No reviews yet.</div> }
+    </div>
+
+    <div class="col-lg-5">
+        <div class="booking-card" id="bookingWidget" data-property-id="@p.Id">
+            <div class="mb-3"><span class="fs-4 fw-bold">@UiHelper.Money(p.PricePerNight)</span> <span class="text-muted">/ night</span></div>
+            <form asp-controller="Bookings" asp-action="Create" method="post">
+                <input type="hidden" name="PropertyId" value="@p.Id" />
+                <div class="row g-2 mb-2">
+                    <div class="col-6"><label class="form-label small mb-1">CHECK-IN</label><input type="date" id="CheckInDate" name="CheckInDate" class="form-control" min="@DateTime.Today.ToString("yyyy-MM-dd")" value="@Model.Booking.CheckInDate.ToString("yyyy-MM-dd")" required /></div>
+                    <div class="col-6"><label class="form-label small mb-1">CHECKOUT</label><input type="date" id="CheckOutDate" name="CheckOutDate" class="form-control" min="@DateTime.Today.AddDays(1).ToString("yyyy-MM-dd")" value="@Model.Booking.CheckOutDate.ToString("yyyy-MM-dd")" required /></div>
+                </div>
+                <div class="mb-3"><label class="form-label small mb-1">GUESTS (max @p.MaxGuests)</label><input type="number" name="Guests" class="form-control" min="1" max="@p.MaxGuests" value="1" required /></div>
+
+                @if (User.Identity?.IsAuthenticated != true)
+                {
+                    <a class="btn btn-sb w-100" asp-controller="Account" asp-action="Login" asp-route-returnUrl="@returnUrl">Log in to book</a>
+                }
+                else if (Model.IsGuest)
+                {
+                    <button class="btn btn-sb w-100" id="bookBtn" type="submit">Request to book</button>
+                    <div class="text-center small text-muted mt-2">You won't be charged until the host approves.</div>
+                }
+                <div id="quoteSummary" class="mt-3 small"></div>
+            </form>
+        </div>
+    </div>
+</div>

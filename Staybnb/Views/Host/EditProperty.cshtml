@@ -1,0 +1,24 @@
+@model PropertyFormViewModel
+@{ ViewData["Title"] = "Edit Property"; ViewData["RequireImage"] = false; }
+<div class="mx-auto" style="max-width: 860px">
+    <div class="panel mb-3">
+        <h6>Current photos</h6>
+        <div class="d-flex flex-wrap gap-3">
+            @foreach (var img in Model.ExistingImages)
+            {
+                <div class="text-center">
+                    <img class="thumb" src="@UiHelper.Img(img.ImageUrl)" alt="" />
+                    <form asp-action="DeleteImage" method="post"><input type="hidden" name="imageId" value="@img.Id" /><button class="btn btn-link btn-sm text-danger p-0">Remove</button></form>
+                </div>
+            }
+        </div>
+    </div>
+    <form asp-action="EditProperty" method="post" enctype="multipart/form-data" class="panel">
+        <partial name="_PropertyFormFields" model="Model" view-data="ViewData" />
+        <div class="mt-4 d-flex gap-2">
+            <button class="btn btn-sb" type="submit">Save changes</button>
+            <a class="btn btn-outline-secondary" asp-action="Properties">Cancel</a>
+        </div>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

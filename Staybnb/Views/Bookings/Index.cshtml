@@ -1,0 +1,28 @@
+@model List<Booking>
+@{ ViewData["Title"] = "My Trips"; }
+<h2 class="mb-3">My Trips</h2>
+@if (!Model.Any())
+{
+    <div class="panel text-center text-muted py-5">No trips yet. <a asp-controller="Properties" asp-action="Index">Find a stay</a>.</div>
+}
+@foreach (var b in Model)
+{
+    <div class="panel mb-3 d-flex gap-3 align-items-center flex-wrap">
+        <img class="row-img" src="@UiHelper.Img(b.Property?.CoverImage)" alt="" />
+        <div class="flex-fill">
+            <div class="fw-semibold">@b.Property?.Title</div>
+            <div class="text-muted small">@b.CheckInDate.ToString("dd MMM yyyy") &rarr; @b.CheckOutDate.ToString("dd MMM yyyy") &middot; @b.Nights night(s) &middot; @b.Guests guest(s)</div>
+            <div class="fw-semibold">@UiHelper.Money(b.TotalPrice)</div>
+        </div>
+        <div class="text-end">
+            <span class="@UiHelper.Badge(b.Status.ToString())">@b.Status</span>
+            <div class="mt-2 d-flex gap-2 justify-content-end">
+                @if (b.Status == BookingStatus.Approved || b.Status == BookingStatus.CheckedIn)
+                {
+                    <a class="btn btn-sm btn-sb" asp-controller="CheckIn" asp-action="Index" asp-route-bookingId="@b.Id">@(b.Status == BookingStatus.CheckedIn ? "Check-in" : "Check in")</a>
+                }
+                <a class="btn btn-sm btn-outline-secondary" asp-action="Details" asp-route-id="@b.Id">Details</a>
+            </div>
+        </div>
+    </div>
+}

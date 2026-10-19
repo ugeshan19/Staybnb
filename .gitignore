@@ -1,0 +1,10 @@
+bin/
+obj/
+.vs/
+App_Data/documents/*
+!App_Data/documents/.gitkeep
+wwwroot/uploads/properties/*
+!wwwroot/uploads/properties/.gitkeep
+.vs/
+*.user
+*.suo

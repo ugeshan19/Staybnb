@@ -1,0 +1,14 @@
+@model List<Review>
+@{ ViewData["Title"] = "Reviews"; }
+@foreach (var r in Model)
+{
+    <div class="panel mb-3">
+        <div class="d-flex justify-content-between">
+            <div><strong>@r.Reviewer?.FullName</strong> <span class="text-muted small">on @r.Property?.Title</span></div>
+            <span class="text-muted small">@r.CreatedAt.ToString("dd MMM yyyy")</span>
+        </div>
+        <div class="text-danger">@for (var i = 0; i < r.Rating; i++) { <i class="fa-solid fa-star"></i> }</div>
+        <div>@r.Comment</div>
+    </div>
+}
+@if (!Model.Any()) { <div class="panel text-center text-muted py-5">No reviews yet.</div> }

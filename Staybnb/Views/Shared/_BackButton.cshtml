@@ -1,0 +1,11 @@
+@{
+    var controller = ViewContext.RouteData.Values["controller"]?.ToString();
+    var action = ViewContext.RouteData.Values["action"]?.ToString();
+
+    // no back button on the landing pages
+    var isLanding = (controller == "Properties" && action == "Index") || action == "Dashboard";
+}
+@if (!isLanding)
+{
+    <a href="/" class="back-btn" data-back><i class="fa-solid fa-arrow-left"></i> Back</a>
+}

@@ -1,0 +1,37 @@
+@model List<HostProperty>
+@{ ViewData["Title"] = "My Properties"; }
+<div class="d-flex justify-content-between mb-3">
+    <span class="text-muted">@Model.Count listing(s)</span>
+    <a class="btn btn-sb btn-sm" asp-controller="HostApplication" asp-action="Create"><i class="fa-solid fa-plus"></i> Add property</a>
+</div>
+@foreach (var p in Model)
+{
+    <div class="panel mb-3">
+        <div class="d-flex gap-3 flex-wrap">
+            <img class="row-img" src="@UiHelper.Img(p.CoverImage)" alt="" />
+            <div class="flex-fill">
+                <div class="d-flex justify-content-between flex-wrap">
+                    <div>
+                        <div class="fw-semibold fs-5">@p.Title</div>
+                        <div class="text-muted small"><i class="fa-solid fa-location-dot"></i> @p.City &middot; @p.PropertyType &middot; @p.MaxGuests guests &middot; @p.Bedrooms bd &middot; @p.Bathrooms ba</div>
+                    </div>
+                    <div class="text-end"><span class="fw-bold">@UiHelper.Money(p.PricePerNight)</span><span class="text-muted small"> /night</span></div>
+                </div>
+                <div class="mt-2 d-flex gap-2 align-items-center">
+                    @if (!p.IsApproved) { <span class="badge-soft-warning">Awaiting approval</span> }
+                    else { <span class="@UiHelper.Badge(p.IsActive ? "Active" : "Inactive")">@(p.IsActive ? "Active" : "Inactive")</span> }
+                    <span class="small text-muted">@p.Bookings.Count booking(s) &middot; @(p.Reviews.Any() ? p.AverageRating.ToString("0.0") + " rating" : "No reviews")</span>
+                </div>
+            </div>
+        </div>
+        <hr class="my-2" />
+        <div class="d-flex gap-2 justify-content-end flex-wrap">
+            <a class="btn btn-sm btn-outline-secondary" asp-action="EditProperty" asp-route-id="@p.Id"><i class="fa-regular fa-pen-to-square"></i> Edit</a>
+            <a class="btn btn-sm btn-outline-secondary" asp-action="ConfigureCheckIn" asp-route-propertyId="@p.Id"><i class="fa-solid fa-list-check"></i> Check-in process</a>
+            <form asp-action="ToggleActive" asp-route-id="@p.Id" method="post">
+                <button class="btn btn-sm @(p.IsActive ? "btn-danger" : "btn-success")" disabled="@(!p.IsApproved)">@(p.IsActive ? "Deactivate" : "Activate")</button>
+            </form>
+        </div>
+    </div>
+}
+@if (!Model.Any()) { <div class="panel text-center text-muted py-5">You have no properties yet.</div> }

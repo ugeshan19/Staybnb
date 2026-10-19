@@ -1,0 +1,106 @@
+@model CheckInStepViewModel
+@{
+    ViewData["Title"] = "Check-in";
+    var ci = Model.CheckIn;
+    var locked = ci.Status == CheckInStatus.Submitted || ci.Status == CheckInStatus.Verified;
+    var docs = ci.Documents.OrderBy(d => d.UploadedAt).ToList();
+    var titles = new[] { "House rules", "Upload ID", "Review & submit" };
+}
+<a asp-controller="Bookings" asp-action="Details" asp-route-id="@Model.Booking.Id" class="small">&larr; Back to booking</a>
+<div class="mx-auto mt-2" style="max-width: 760px">
+    <h2>Check in to @Model.Booking.Property?.Title</h2>
+    <p class="text-muted">@Model.Config.Instructions</p>
+
+    <div class="d-flex align-items-center gap-2 mb-4">
+        @for (var i = 1; i <= 3; i++)
+        {
+            var cls = locked || i < Model.Step ? "done" : (i == Model.Step ? "current" : "");
+            <a class="text-decoration-none d-flex align-items-center gap-2 @(i > ci.CurrentStep && !locked ? "pe-none opacity-50" : "")" asp-action="Index" asp-route-bookingId="@Model.Booking.Id" asp-route-step="@i">
+                <span class="step-dot @cls">@i</span><span class="small text-dark">@titles[i - 1]</span>
+            </a>
+            @if (i < 3) { <span class="text-muted">&mdash;</span> }
+        }
+    </div>
+
+    @if (ci.Status == CheckInStatus.Rejected)
+    {
+        <div class="alert alert-warning">The host rejected a document. Please upload a replacement and submit again.</div>
+    }
+    @if (locked)
+    {
+        <div class="alert @(ci.Status == CheckInStatus.Verified ? "alert-success" : "alert-info")">
+            @(ci.Status == CheckInStatus.Verified ? "You're checked in. Enjoy your stay!" : "Submitted - waiting for the host to verify your documents.")
+        </div>
+    }
+
+    <div class="panel">
+        @if (Model.Step == 1)
+        {
+            <h5>Step 1: House rules</h5>
+            @if (Model.Config.Rules.Any())
+            {
+                <ul>@foreach (var r in Model.Config.Rules) { <li>@r</li> }</ul>
+            }
+            else { <p class="text-muted">The host has not set any special rules.</p> }
+            <form asp-action="AcknowledgeRules" method="post">
+                <input type="hidden" name="bookingId" value="@Model.Booking.Id" />
+                <div class="form-check mb-3"><input class="form-check-input" type="checkbox" name="accepted" value="true" id="accepted" checked="@ci.RulesAcknowledged" /><label class="form-check-label" for="accepted">I have read and agree to follow the house rules.</label></div>
+                <button class="btn btn-sb">Continue</button>
+            </form>
+        }
+        else if (Model.Step == 2)
+        {
+            <h5>Step 2: Upload your ID or passport</h5>
+            <p class="text-muted small">Required: @string.Join(", ", Model.Config.RequiredDocuments). Only you and the host can see this file.</p>
+            <form asp-action="UploadDocument" method="post" enctype="multipart/form-data">
+                <input type="hidden" name="bookingId" value="@Model.Booking.Id" />
+                <div class="mb-3">
+                    <label class="form-label">Document type</label>
+                    <select name="documentType" class="form-select">
+                        @foreach (var d in Model.Config.RequiredDocuments) { <option value="@d">@d</option> }
+                    </select>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">File (PDF, JPG or PNG, max 5 MB)</label>
+                    <input type="file" name="document" class="form-control" accept=".pdf,.jpg,.jpeg,.png" required />
+                </div>
+                <button class="btn btn-sb">Upload</button>
+            </form>
+            @if (docs.Any())
+            {
+                <hr /><div class="small text-muted mb-1">Already uploaded</div>
+                @foreach (var d in docs) { <div>@d.DocumentType - @d.OriginalName <span class="@UiHelper.Badge(d.Status.ToString())">@d.Status</span></div> }
+                <a class="btn btn-outline-sb btn-sm mt-2" asp-action="Index" asp-route-bookingId="@Model.Booking.Id" asp-route-step="3">Next: review</a>
+            }
+        }
+        else
+        {
+            <h5>Step 3: Review &amp; submit</h5>
+            <p><i class="fa-solid @(ci.RulesAcknowledged ? "fa-circle-check text-success" : "fa-circle-xmark text-danger")"></i> House rules @(ci.RulesAcknowledged ? "accepted" : "not accepted")</p>
+            @if (!docs.Any()) { <p class="text-danger">No documents uploaded yet.</p> }
+            @foreach (var d in docs)
+            {
+                <div class="d-flex align-items-center gap-2 mb-2">
+                    <i class="fa-solid fa-file"></i>
+                    <a asp-controller="Documents" asp-action="Download" asp-route-id="@d.Id" target="_blank">@d.DocumentType - @d.OriginalName</a>
+                    <span class="@UiHelper.Badge(d.Status.ToString())">@d.Status</span>
+                    @if (!string.IsNullOrEmpty(d.RejectionReason)) { <span class="small text-danger">@d.RejectionReason</span> }
+                    @if (!locked)
+                    {
+                        <form asp-action="RemoveDocument" method="post" class="ms-auto">
+                            <input type="hidden" name="bookingId" value="@Model.Booking.Id" /><input type="hidden" name="documentId" value="@d.Id" />
+                            <button class="btn btn-sm btn-outline-danger">Remove</button>
+                        </form>
+                    }
+                </div>
+            }
+            @if (!locked)
+            {
+                <div class="d-flex gap-2 mt-3">
+                    <a class="btn btn-outline-secondary" asp-action="Index" asp-route-bookingId="@Model.Booking.Id" asp-route-step="2">Upload another</a>
+                    <form asp-action="Submit" method="post"><input type="hidden" name="bookingId" value="@Model.Booking.Id" /><button class="btn btn-sb" type="submit">Submit check-in</button></form>
+                </div>
+            }
+        }
+    </div>
+</div>

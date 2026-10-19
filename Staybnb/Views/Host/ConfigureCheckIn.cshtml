@@ -1,0 +1,16 @@
+@model CheckInConfigViewModel
+@{ ViewData["Title"] = "Check-in Process"; }
+<div class="mx-auto" style="max-width: 720px">
+    <p class="text-muted">Define what guests of <strong>@Model.PropertyTitle</strong> must do before they arrive.</p>
+    <form asp-action="ConfigureCheckIn" method="post" class="panel">
+        <input type="hidden" asp-for="PropertyId" />
+        <div asp-validation-summary="ModelOnly" class="text-danger"></div>
+        <div class="mb-3"><label asp-for="Title" class="form-label"></label><input asp-for="Title" class="form-control" /><span asp-validation-for="Title" class="text-danger small"></span></div>
+        <div class="mb-3"><label asp-for="Instructions" class="form-label"></label><textarea asp-for="Instructions" rows="2" class="form-control"></textarea></div>
+        <div class="mb-3"><label asp-for="RulesText" class="form-label"></label><textarea asp-for="RulesText" rows="5" class="form-control"></textarea></div>
+        <div class="mb-3"><label asp-for="DocumentsText" class="form-label"></label><textarea asp-for="DocumentsText" rows="3" class="form-control"></textarea><span asp-validation-for="DocumentsText" class="text-danger small"></span><div class="form-text">e.g. South African ID, Passport</div></div>
+        <button class="btn btn-sb">Save</button>
+        <a class="btn btn-outline-secondary" asp-action="Properties">Cancel</a>
+    </form>
+</div>
+@section Scripts { <partial name="_ValidationScriptsPartial" /> }

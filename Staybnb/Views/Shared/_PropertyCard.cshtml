@@ -1,0 +1,29 @@
+@model HostProperty
+@{
+    var wished = ViewData["Wished"] as bool? ?? false;
+    var isGuest = ViewData["IsGuest"] as bool? ?? false;
+    var returnUrl = Context.Request.Path + Context.Request.QueryString;
+}
+<div class="prop-card">
+    <div class="prop-img-wrap">
+        <a asp-controller="Properties" asp-action="Details" asp-route-id="@Model.Id">
+            <img src="@UiHelper.Img(Model.CoverImage)" alt="@Model.Title" class="prop-img" />
+        </a>
+        @if (isGuest)
+        {
+            <form asp-controller="Wishlist" asp-action="Toggle" method="post" class="prop-heart">
+                <input type="hidden" name="propertyId" value="@Model.Id" />
+                <input type="hidden" name="returnUrl" value="@returnUrl" />
+                <button type="submit" title="Wishlist"><i class="@(wished ? "fa-solid text-danger" : "fa-regular") fa-heart"></i></button>
+            </form>
+        }
+    </div>
+    <a class="text-decoration-none text-dark" asp-controller="Properties" asp-action="Details" asp-route-id="@Model.Id">
+        <div class="d-flex justify-content-between mt-2">
+            <span class="fw-semibold text-truncate"><i class="fa-solid fa-location-dot text-muted small"></i> @Model.City, @Model.Country</span>
+            <span class="small"><i class="fa-solid fa-star text-danger"></i> @(Model.Reviews.Any() ? Model.AverageRating.ToString("0.0") : "New") <span class="text-muted">(@Model.Reviews.Count)</span></span>
+        </div>
+        <div class="text-muted small text-truncate">@Model.Title</div>
+        <div><strong>@UiHelper.Money(Model.PricePerNight)</strong> <span class="text-muted small">per night</span></div>
+    </a>
+</div>

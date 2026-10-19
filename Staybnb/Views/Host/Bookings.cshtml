@@ -1,0 +1,49 @@
+@model List<Booking>
+@{ ViewData["Title"] = "Booking Requests"; var current = ViewBag.Status as string; }
+<div class="d-flex gap-2 mb-3 flex-wrap">
+    <a class="type-pill @(string.IsNullOrEmpty(current) ? "active" : "")" asp-action="Bookings">All</a>
+    @foreach (var s in new[] { "Pending", "Approved", "CheckedIn", "Completed", "Rejected", "Cancelled" })
+    {
+        <a class="type-pill @(current == s ? "active" : "")" asp-action="Bookings" asp-route-status="@s">@s</a>
+    }
+</div>
+<div class="panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>#</th><th>Guest</th><th>Property</th><th>Dates</th><th>Guests</th><th>Total</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+            <tbody>
+            @foreach (var b in Model)
+            {
+                <tr>
+                    <td>@b.Id</td>
+                    <td>@b.Guest?.FullName<div class="small text-muted">@b.Guest?.Email</div></td>
+                    <td>@b.Property?.Title</td>
+                    <td>@b.CheckInDate.ToString("dd MMM") - @b.CheckOutDate.ToString("dd MMM yyyy")<div class="small text-muted">@b.Nights night(s)</div></td>
+                    <td>@b.Guests</td>
+                    <td>@UiHelper.Money(b.TotalPrice)</td>
+                    <td><span class="@UiHelper.Badge(b.Status.ToString())">@b.Status</span></td>
+                    <td class="text-end">
+                        <div class="d-flex gap-1 justify-content-end">
+                        @if (b.Status == BookingStatus.Pending)
+                        {
+                            <form asp-action="ApproveBooking" asp-route-id="@b.Id" method="post"><button class="btn btn-sm btn-success">Approve</button></form>
+                            <form asp-action="RejectBooking" asp-route-id="@b.Id" method="post" onsubmit="return confirm('Reject this request?');"><button class="btn btn-sm btn-outline-danger">Reject</button></form>
+                        }
+                        else if (b.Status == BookingStatus.Approved && b.GuestCheckIn != null)
+                        {
+                            <a class="btn btn-sm btn-outline-secondary" asp-action="CheckInReview" asp-route-id="@b.GuestCheckIn.Id">Check-in (@b.GuestCheckIn.Status)</a>
+                        }
+                        else if (b.Status == BookingStatus.CheckedIn)
+                        {
+                            <form asp-action="CompleteStay" asp-route-id="@b.Id" method="post"><button class="btn btn-sm btn-outline-secondary">Mark completed</button></form>
+                        }
+                        <a class="btn btn-sm btn-outline-secondary" asp-controller="Messages" asp-action="Thread" asp-route-id="@b.GuestId" title="Message guest"><i class="fa-regular fa-envelope"></i></a>
+                        </div>
+                    </td>
+                </tr>
+            }
+            @if (!Model.Any()) { <tr><td colspan="8" class="text-center text-muted py-4">No bookings found.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

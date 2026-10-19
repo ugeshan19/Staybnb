@@ -1,0 +1,5 @@
+@{
+    // Hosts and Admins get the sidebar dashboard shell; everyone else gets the public Airbnb-style layout.
+    var isStaff = User.IsInRole(Roles.Host) || User.IsInRole(Roles.Admin) || User.IsInRole(Roles.SuperAdmin);
+    Layout = isStaff ? "_DashboardLayout" : "_Layout";
+}

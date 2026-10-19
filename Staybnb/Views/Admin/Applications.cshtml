@@ -1,0 +1,27 @@
+@model List<HostApplication>
+@{ ViewData["Title"] = "Host Requests"; var current = ViewBag.Status as string; }
+<div class="d-flex gap-2 mb-3">
+    <a class="type-pill @(string.IsNullOrEmpty(current) ? "active" : "")" asp-action="Applications">All</a>
+    @foreach (var s in Enum.GetNames<ApplicationStatus>())
+    {
+        <a class="type-pill @(current == s ? "active" : "")" asp-action="Applications" asp-route-status="@s">@s</a>
+    }
+</div>
+<div class="panel">
+    <table class="table align-middle">
+        <thead><tr><th>Applicant</th><th>Property</th><th>Applied</th><th>Status</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        @foreach (var a in Model)
+        {
+            <tr>
+                <td>@a.ApplicationUser?.FullName<div class="small text-muted">@a.ApplicationUser?.Email</div></td>
+                <td class="d-flex gap-2 align-items-center"><img class="thumb m-0" style="width:60px;height:44px" src="@UiHelper.Img(a.Property?.Images.FirstOrDefault()?.ImageUrl)" alt="" /><div>@a.Property?.Title<div class="small text-muted">@a.Property?.City &middot; @UiHelper.Money(a.Property?.PricePerNight ?? 0)</div></div></td>
+                <td>@a.AppliedAt.ToString("yyyy-MM-dd")</td>
+                <td><span class="@UiHelper.Badge(a.Status.ToString())">@a.Status</span></td>
+                <td class="text-end"><a class="btn btn-sm @(a.Status == ApplicationStatus.Pending ? "btn-sb" : "btn-outline-secondary")" asp-action="ApplicationDetails" asp-route-id="@a.Id">@(a.Status == ApplicationStatus.Pending ? "Review" : "View")</a></td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="5" class="text-center text-muted py-4">No applications.</td></tr> }
+        </tbody>
+    </table>
+</div>

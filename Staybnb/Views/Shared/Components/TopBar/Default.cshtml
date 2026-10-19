@@ -1,0 +1,29 @@
+@model TopBarViewModel
+<div class="d-flex align-items-center gap-2">
+    <a class="sb-icon-btn" asp-controller="Messages" asp-action="Inbox" title="Messages">
+        <i class="fa-solid fa-envelope"></i>
+        @if (Model.UnreadMessages > 0) { <span class="sb-dot">@Model.UnreadMessages</span> }
+    </a>
+    <div class="dropdown">
+        <button class="sb-icon-btn" data-bs-toggle="dropdown" title="Notifications">
+            <i class="fa-regular fa-bell"></i>
+            @if (Model.UnreadNotifications > 0) { <span class="sb-dot">@Model.UnreadNotifications</span> }
+        </button>
+        <div class="dropdown-menu dropdown-menu-end shadow p-0" style="width:320px">
+            <div class="px-3 py-2 border-bottom fw-semibold">Notifications</div>
+            @if (!Model.Recent.Any())
+            {
+                <div class="p-3 text-muted small">You're all caught up.</div>
+            }
+            @foreach (var n in Model.Recent)
+            {
+                <a class="dropdown-item py-2 @(n.IsRead ? "" : "bg-light fw-semibold")" asp-controller="Notifications" asp-action="Open" asp-route-id="@n.Id">
+                    <div class="small">@n.Title</div>
+                    <div class="small text-muted text-wrap">@n.Message</div>
+                    <div class="small text-muted">@UiHelper.Ago(n.CreatedAt)</div>
+                </a>
+            }
+            <a class="dropdown-item text-center text-danger border-top py-2" asp-controller="Notifications" asp-action="Index">View all</a>
+        </div>
+    </div>
+</div>

@@ -1,0 +1,88 @@
+@model Booking
+@{
+    ViewData["Title"] = "Booking #" + Model.Id;
+    var hasReview = ViewBag.HasReview as bool? ?? false;
+    var steps = new[] { BookingStatus.Pending, BookingStatus.Approved, BookingStatus.CheckedIn };
+    var terminal = Model.Status == BookingStatus.Rejected || Model.Status == BookingStatus.Cancelled;
+}
+<a asp-action="Index" class="small">&larr; My trips</a>
+<div class="row g-4 mt-1">
+    <div class="col-lg-7">
+        <div class="panel">
+            <div class="d-flex gap-3 align-items-center">
+                <img class="row-img" src="@UiHelper.Img(Model.Property?.CoverImage)" alt="" />
+                <div>
+                    <h4 class="mb-0">@Model.Property?.Title</h4>
+                    <div class="text-muted small">@Model.Property?.City &middot; Host: @Model.Property?.Host?.FullName</div>
+                </div>
+                <span class="ms-auto @UiHelper.Badge(Model.Status.ToString())">@Model.Status</span>
+            </div>
+            <hr />
+            <div class="row">
+                <div class="col-6"><div class="small text-muted">Check-in</div><div class="fw-semibold">@Model.CheckInDate.ToString("ddd, dd MMM yyyy")</div></div>
+                <div class="col-6"><div class="small text-muted">Check-out</div><div class="fw-semibold">@Model.CheckOutDate.ToString("ddd, dd MMM yyyy")</div></div>
+                <div class="col-6 mt-2"><div class="small text-muted">Guests</div><div class="fw-semibold">@Model.Guests</div></div>
+                <div class="col-6 mt-2"><div class="small text-muted">Address</div><div class="fw-semibold">@(Model.Status == BookingStatus.Pending || terminal ? Model.Property?.City : Model.Property?.Address)</div></div>
+            </div>
+
+            <hr />
+            @if (terminal)
+            {
+                <div class="text-muted">This booking was @Model.Status.ToString().ToLower().</div>
+            }
+            else
+            {
+                <div class="d-flex align-items-center gap-2 flex-wrap">
+                    @for (var i = 0; i < steps.Length; i++)
+                    {
+                        var done = Model.Status >= steps[i] && Model.Status != BookingStatus.Rejected && Model.Status != BookingStatus.Cancelled;
+                        <span class="step-dot @(done ? "done" : "")">@(i + 1)</span><span class="small me-3">@steps[i]</span>
+                    }
+                </div>
+            }
+
+            <div class="mt-3 d-flex gap-2 flex-wrap">
+                @if (Model.Status == BookingStatus.Approved || Model.Status == BookingStatus.CheckedIn)
+                {
+                    <a class="btn btn-sb" asp-controller="CheckIn" asp-action="Index" asp-route-bookingId="@Model.Id">
+                        @(Model.GuestCheckIn == null ? "Start check-in" : "Open check-in")
+                        @if (Model.GuestCheckIn != null) { <span class="ms-1">(@Model.GuestCheckIn.Status)</span> }
+                    </a>
+                }
+                @if (Model.Status == BookingStatus.Pending || Model.Status == BookingStatus.Approved)
+                {
+                    <form asp-action="Cancel" asp-route-id="@Model.Id" method="post" onsubmit="return confirm('Cancel this booking?');">
+                        <button class="btn btn-outline-danger">Cancel booking</button>
+                    </form>
+                }
+                <a class="btn btn-outline-secondary" asp-controller="Messages" asp-action="Thread" asp-route-id="@Model.Property?.HostId"><i class="fa-regular fa-envelope"></i> Message host</a>
+            </div>
+        </div>
+
+        @if ((Model.Status == BookingStatus.CheckedIn || Model.Status == BookingStatus.Completed) && !hasReview)
+        {
+            <div class="panel mt-3">
+                <h5>Rate your stay</h5>
+                <form asp-action="AddReview" asp-route-id="@Model.Id" method="post">
+                    <select name="rating" class="form-select mb-2" style="max-width:180px">
+                        <option value="5">5 - Excellent</option><option value="4">4 - Good</option><option value="3">3 - Okay</option><option value="2">2 - Poor</option><option value="1">1 - Terrible</option>
+                    </select>
+                    <textarea name="comment" rows="3" maxlength="1000" class="form-control mb-2" placeholder="Share your experience"></textarea>
+                    <button class="btn btn-sb">Submit review</button>
+                </form>
+            </div>
+        }
+    </div>
+
+    <div class="col-lg-5">
+        <div class="panel">
+            <h5>Price details</h5>
+            <div class="d-flex justify-content-between"><span>@UiHelper.Money(Model.NightlyRate) x @Model.Nights night(s)</span><span>@UiHelper.Money(Model.NightlyRate * Model.Nights)</span></div>
+            <div class="d-flex justify-content-between"><span>Cleaning fee</span><span>@UiHelper.Money(Model.CleaningFee)</span></div>
+            <div class="d-flex justify-content-between"><span>Service fee</span><span>@UiHelper.Money(Model.ServiceFee)</span></div>
+            <hr />
+            <div class="d-flex justify-content-between fw-bold"><span>Total</span><span>@UiHelper.Money(Model.TotalPrice)</span></div>
+            <div class="mt-2 small">Payment: <span class="@UiHelper.Badge((Model.Payment?.Status ?? PaymentStatus.Pending).ToString())">@(Model.Payment?.Status ?? PaymentStatus.Pending)</span></div>
+        </div>
+    </div>
+</div>

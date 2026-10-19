@@ -1,0 +1,44 @@
+@model HostDashboardViewModel
+@{ ViewData["Title"] = "Host Dashboard"; }
+<div class="panel mb-4">
+    <h4 class="text-danger">Welcome back, @Model.HostName!</h4>
+    <p class="text-muted">Here's what's happening with your properties today.</p>
+    <div class="d-flex flex-wrap gap-2">
+        <a class="btn btn-outline-sb btn-sm" asp-controller="HostApplication" asp-action="Create"><i class="fa-solid fa-plus"></i> Add New Property</a>
+        <a class="btn btn-outline-sb btn-sm" asp-action="Bookings"><i class="fa-solid fa-calendar-check"></i> View Booking Requests</a>
+        <a class="btn btn-outline-sb btn-sm" asp-action="Earnings"><i class="fa-solid fa-chart-line"></i> View Earnings Report</a>
+    </div>
+</div>
+
+<div class="row g-3 mb-4">
+    <div class="col-6 col-xl-3"><div class="stat-card"><span class="stat-icon bg-primary-subtle text-primary"><i class="fa-solid fa-house"></i></span><div class="stat-value">@Model.TotalProperties</div><div class="small text-muted">Total Properties</div><div class="small text-success">@Model.ActiveProperties active</div></div></div>
+    <div class="col-6 col-xl-3"><div class="stat-card"><span class="stat-icon bg-info-subtle text-primary"><i class="fa-solid fa-calendar"></i></span><div class="stat-value">@Model.TotalBookings</div><div class="small text-muted">Total Bookings</div><div class="small text-success">@Model.BookingsThisMonth this month</div></div></div>
+    <div class="col-6 col-xl-3"><div class="stat-card"><span class="stat-icon bg-success-subtle text-success"><i class="fa-solid fa-money-bill"></i></span><div class="stat-value">@UiHelper.Money(Model.TotalEarnings)</div><div class="small text-muted">Total Earnings</div><div class="small text-success">@UiHelper.Money(Model.EarningsThisMonth) this month</div></div></div>
+    <div class="col-6 col-xl-3"><div class="stat-card"><span class="stat-icon bg-warning-subtle text-warning"><i class="fa-solid fa-star"></i></span><div class="stat-value">@Model.AverageRating.ToString("0.0")</div><div class="small text-muted">Average Rating</div><div class="small text-success">@Model.ReviewCount reviews</div></div></div>
+</div>
+
+<div class="panel mb-4">
+    <h6>Performance Metrics</h6>
+    <div class="row text-center g-3">
+        <div class="col-6 col-md-3"><div class="stat-value text-danger fs-4">@Model.AcceptanceRate%</div><div class="small text-muted">Acceptance rate</div></div>
+        <div class="col-6 col-md-3"><div class="stat-value text-danger fs-4">@Model.PendingRequests</div><div class="small text-muted">Pending requests</div></div>
+        <div class="col-6 col-md-3"><div class="stat-value text-danger fs-4">@Model.PendingCheckIns</div><div class="small text-muted">Check-ins to verify</div></div>
+        <div class="col-6 col-md-3"><div class="stat-value text-danger fs-4">@UiHelper.Money(Model.AverageBookingValue)</div><div class="small text-muted">Avg. payout / booking</div></div>
+    </div>
+</div>
+
+<div class="panel">
+    <div class="d-flex justify-content-between"><h6>Recent bookings</h6><a asp-action="Bookings" class="small">See all</a></div>
+    <div class="table-responsive">
+        <table class="table table-sm">
+            <thead><tr><th>Guest</th><th>Property</th><th>Dates</th><th>Total</th><th>Status</th></tr></thead>
+            <tbody>
+            @foreach (var b in Model.RecentBookings)
+            {
+                <tr><td>@b.Guest?.FullName</td><td>@b.Property?.Title</td><td>@b.CheckInDate.ToString("dd MMM") - @b.CheckOutDate.ToString("dd MMM")</td><td>@UiHelper.Money(b.TotalPrice)</td><td><span class="@UiHelper.Badge(b.Status.ToString())">@b.Status</span></td></tr>
+            }
+            @if (!Model.RecentBookings.Any()) { <tr><td colspan="5" class="text-muted text-center">No bookings yet.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

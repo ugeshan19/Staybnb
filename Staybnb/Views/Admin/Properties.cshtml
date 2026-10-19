@@ -1,0 +1,25 @@
+@model List<HostProperty>
+@{ ViewData["Title"] = "All Properties"; }
+<div class="panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Property</th><th>Host</th><th>City</th><th>Price</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var p in Model)
+            {
+                <tr>
+                    <td class="d-flex gap-2 align-items-center"><img class="thumb m-0" style="width:60px;height:44px" src="@UiHelper.Img(p.CoverImage)" alt="" />@p.Title</td>
+                    <td>@p.Host?.FullName</td><td>@p.City</td><td>@UiHelper.Money(p.PricePerNight)</td>
+                    <td>@if (!p.IsApproved) { <span class="badge-soft-warning">Pending approval</span> } else { <span class="@UiHelper.Badge(p.IsActive ? "Active" : "Inactive")">@(p.IsActive ? "Active" : "Inactive")</span> }</td>
+                    <td class="text-end">
+                        @if (p.IsActive)
+                        {
+                            <form asp-action="DeactivateProperty" asp-route-id="@p.Id" method="post" onsubmit="return confirm('Deactivate this listing?');"><button class="btn btn-sm btn-outline-danger">Deactivate</button></form>
+                        }
+                    </td>
+                </tr>
+            }
+            </tbody>
+        </table>
+    </div>
+</div>

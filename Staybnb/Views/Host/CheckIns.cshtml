@@ -1,0 +1,23 @@
+@model List<GuestCheckIn>
+@{ ViewData["Title"] = "Guest Check-ins"; }
+<div class="panel">
+    <div class="table-responsive">
+        <table class="table align-middle">
+            <thead><tr><th>Guest</th><th>Property</th><th>Stay</th><th>Documents</th><th>Status</th><th></th></tr></thead>
+            <tbody>
+            @foreach (var c in Model)
+            {
+                <tr>
+                    <td>@c.Booking?.Guest?.FullName</td>
+                    <td>@c.Booking?.Property?.Title</td>
+                    <td>@c.Booking?.CheckInDate.ToString("dd MMM") - @c.Booking?.CheckOutDate.ToString("dd MMM")</td>
+                    <td>@c.Documents.Count</td>
+                    <td><span class="@UiHelper.Badge(c.Status.ToString())">@c.Status</span></td>
+                    <td class="text-end"><a class="btn btn-sm @(c.Status == CheckInStatus.Submitted ? "btn-sb" : "btn-outline-secondary")" asp-action="CheckInReview" asp-route-id="@c.Id">@(c.Status == CheckInStatus.Submitted ? "Review" : "View")</a></td>
+                </tr>
+            }
+            @if (!Model.Any()) { <tr><td colspan="6" class="text-center text-muted py-4">No guest check-ins yet.</td></tr> }
+            </tbody>
+        </table>
+    </div>
+</div>

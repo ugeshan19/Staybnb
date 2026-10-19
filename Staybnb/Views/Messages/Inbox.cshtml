@@ -1,0 +1,25 @@
+@model List<InboxItem>
+@{ ViewData["Title"] = "Messages"; }
+<div class="mx-auto" style="max-width: 820px">
+    <form asp-action="Start" method="post" class="panel mb-3 d-flex gap-2">
+        <input name="email" type="email" class="form-control" placeholder="Start a conversation - enter an email address" required />
+        <button class="btn btn-sb text-nowrap">New message</button>
+    </form>
+    <div class="panel p-0">
+        @foreach (var c in Model)
+        {
+            <a class="d-flex gap-3 p-3 border-bottom text-decoration-none text-dark @(c.Unread > 0 ? "bg-light" : "")" asp-action="Thread" asp-route-id="@c.OtherUser.Id">
+                <span class="avatar">@c.OtherUser.Initials</span>
+                <div class="flex-fill overflow-hidden">
+                    <div class="d-flex justify-content-between">
+                        <span class="@(c.Unread > 0 ? "fw-bold" : "fw-semibold")">@c.OtherUser.FullName</span>
+                        <span class="small text-muted">@UiHelper.Ago(c.LastMessage.Timestamp)</span>
+                    </div>
+                    <div class="text-truncate small @(c.Unread > 0 ? "fw-semibold" : "text-muted")">@(c.LastMessage.SenderId == c.OtherUser.Id ? "" : "You: ")@c.LastMessage.Content</div>
+                </div>
+                @if (c.Unread > 0) { <span class="badge rounded-pill text-bg-danger align-self-center">@c.Unread</span> }
+            </a>
+        }
+        @if (!Model.Any()) { <div class="p-5 text-center text-muted">Your inbox is empty.</div> }
+    </div>
+</div>

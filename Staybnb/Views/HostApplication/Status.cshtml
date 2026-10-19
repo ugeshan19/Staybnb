@@ -1,0 +1,22 @@
+@model List<HostApplication>
+@{ ViewData["Title"] = "Host Application Status"; }
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2 class="mb-0">Host Application Status</h2>
+    <a class="btn btn-sb" asp-action="Create"><i class="fa-solid fa-plus"></i> @(User.IsInRole(Roles.Host) ? "Add another property" : "Apply to host")</a>
+</div>
+@if (!Model.Any())
+{
+    <div class="panel text-center text-muted py-5">You haven't applied yet. Click <strong>Apply to host</strong> to list your first property.</div>
+}
+@foreach (var a in Model)
+{
+    <div class="panel mb-3 d-flex gap-3 align-items-center">
+        <img class="row-img" src="@UiHelper.Img(a.Property?.Images.FirstOrDefault()?.ImageUrl)" alt="" />
+        <div class="flex-fill">
+            <div class="fw-semibold">@a.Property?.Title</div>
+            <div class="text-muted small">@a.Property?.City &middot; @UiHelper.Money(a.Property?.PricePerNight ?? 0) / night &middot; applied @a.AppliedAt.ToString("dd MMM yyyy")</div>
+            @if (!string.IsNullOrEmpty(a.AdminNotes)) { <div class="small text-danger mt-1">Admin note: @a.AdminNotes</div> }
+        </div>
+        <span class="@UiHelper.Badge(a.Status.ToString())">@a.Status</span>
+    </div>
+}

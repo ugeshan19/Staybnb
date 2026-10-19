@@ -1,0 +1,39 @@
+@model List<UserListItem>
+@{ ViewData["Title"] = "User Management"; var role = ViewBag.Role as string; }
+<form method="get" class="filter-bar row g-2 mb-3">
+    <div class="col-md-6"><input name="search" value="@ViewBag.Search" class="form-control" placeholder="Search name or email" /></div>
+    <div class="col-md-3">
+        <select name="role" class="form-select">
+            <option value="">All roles</option>
+            @foreach (var r in Roles.All) { <option value="@r" selected="@(role == r)">@r</option> }
+        </select>
+    </div>
+    <div class="col-md-3 d-flex gap-2"><button class="btn btn-sb flex-fill">Find</button><a class="btn btn-outline-secondary" asp-action="Users">Clear</a></div>
+</form>
+<div class="panel">
+    <table class="table align-middle">
+        <thead><tr><th>User</th><th>Roles</th><th>Joined</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+        @foreach (var u in Model)
+        {
+            <tr>
+                <td><div class="d-flex gap-2 align-items-center"><span class="avatar">@u.User.Initials</span><div>@u.User.FullName<div class="small text-muted">@u.User.Email</div></div></div></td>
+                <td>@foreach (var r in u.Roles) { <span class="@(r == "SuperAdmin" || r == "Admin" ? "badge-soft-danger" : r == "Host" ? "badge-soft-info" : "badge-soft-secondary") me-1">@r</span> }</td>
+                <td>@u.User.CreatedAt.ToString("yyyy-MM-dd")</td>
+                <td class="text-end">
+                    @if (u.Roles.Contains(Roles.Guest))
+                    {
+                        <form asp-action="Promote" asp-route-id="@u.User.Id" method="post" class="d-inline" onsubmit="return confirm('Promote @u.User.FullName to Admin?');"><button class="btn btn-sm btn-sb">Promote to Admin</button></form>
+                    }
+                    else if (u.Roles.Contains(Roles.Admin) && !u.Roles.Contains(Roles.SuperAdmin))
+                    {
+                        <form asp-action="Demote" asp-route-id="@u.User.Id" method="post" class="d-inline" onsubmit="return confirm('Remove Admin access from @u.User.FullName?');"><button class="btn btn-sm btn-outline-danger">Demote</button></form>
+                    }
+                    else { <span class="small text-muted">-</span> }
+                </td>
+            </tr>
+        }
+        @if (!Model.Any()) { <tr><td colspan="4" class="text-center text-muted py-4">No users found.</td></tr> }
+        </tbody>
+    </table>
+</div>
